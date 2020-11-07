@@ -1,0 +1,31 @@
+<%- include("partials/header") %>
+<h1>Home</h1>
+<p><%= startingContent %></p>
+<% content.forEach(element => { 
+    
+   //--- Titulo del post ---
+//    var key = Object.keys(element)[0];
+//    var value = element[key];  -- PONER ESTE VALUE COMO EL TITULO
+   //--- Cuerpo del post ---
+//    var key2 = Object.keys(element)[1];
+//    var value_2 = element[key2]; -- PONER ESTE VALUE_2 COMO EL CUERPO OSEA EL BODY xD
+ 
+//---- But there is another better way to do this 
+//This is like magic cause you just only have to put the ky and the vaule will be set xD
+   let title = element.title;
+   let body = element.body; 
+   let readMore;
+
+   if(body.length > 100){
+       body = body.substring(0,100) + "...";
+      
+   }
+
+   %>
+<h1> <%= title %> </h1>
+<p> <%= body %> <a href="/post/<%= title %>">Read More</a> </p>
+
+<%  })   %>
+
+
+<%- include("partials/footer") %>
