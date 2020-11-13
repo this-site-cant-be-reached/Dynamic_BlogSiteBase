@@ -3,7 +3,7 @@ const _ = require('lodash');
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
-
+const mongoose = require("mongoose");
 
 
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
@@ -12,25 +12,53 @@ const contactContent = "Scelerisque eleifend donec pretium vulputate sapien. Rho
 
 const arrayTopic = [];
 
-const publishArray = [];
+// const publishArray = [];
 
 const app = express();
+
+mongoose.connect('mongodb://localhost:27017/blogDB', { useNewUrlParser: true, useUnifiedTopology: true });
+
+
+const postSchema = {
+
+  title: String,
+
+  content: String
+
+};
+
+const Post = mongoose.model("Post", postSchema);
 
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({
   extended: true
 }));
+
 app.use(express.static("public"));
 
+
+// ------>>>>>> Main Page <<<<<<<<<-------------
 app.get("/", function (req, res) {
- 
-  // console.log(publishArray);
-  res.render("home", {
-    content: publishArray , startingContent : homeStartingContent
+   
+
+  // >>>> Find the posts in the data base and show it up to be displayed <<<< 
+  Post.find({}, function (err, posts) {
+
+    res.render("home", {
+
+      startingContent: homeStartingContent,
+
+      contenidoDePosts: posts
+
+    });
+
   });
+
+
 });
 
+//-------- >>>>>> About Page <<<<<<<<<-----------
 app.get("/about", function (req, res) {
   res.render("about", {
     content: aboutContent
@@ -38,66 +66,96 @@ app.get("/about", function (req, res) {
 
 });
 
+//-------- >>>>>> Contact Page <<<<<<<------------
 app.get("/contact", function (req, res) {
   res.render("contact", {
     content: contactContent
   });
 });
 
+// ---------->>>>>>>>>> Compose Section <<<<<<<<-----------
 app.get("/compose", function (req, res) {
   res.render("compose");
 });
 
 app.post("/compose", function (req, res) {
 
+  //Set a document in the model of a collection ( data in table "posts" ,pluralised automatically for mongoose, of the database blogDB)
+  const post = new Post({
 
-  const post = {
     title: req.body.postTitle,
-    body: req.body.postBody
-  };
 
-  publishArray.push(post);
+    content: req.body.postBody
 
-  res.redirect("/");
-
-});
-
-app.get("/post/:topic", function (req, res) {
+  });
  
-  const topic = _.lowerCase(req.params.topic); //using "_" and is the global variable requiring the library lodash 
+  post.save(function (err) {
 
+    if (!err) {
 
-  publishArray.forEach(element => {
-
-    const storedTitle = _.lowerCase(element.title);
-
-    if (topic === storedTitle) {
-
-      const postEncontrado = {
-        titulo: element.title,
-        cuerpo: element.body
-      };
-
-      res.render("post", { contenido: postEncontrado });
+      res.redirect("/");
 
     }
 
   });
+
+  // publishArray.push(post);
+
+ 
+
+});
+
+
+//---------->>>>>>>>> dynamic posts params to desplay the post choosen xD <<<<<<<<<------------
+app.get("/post/:postId", function (req, res) {
+ 
+  const requestedPostId = req.params.postId; //using "_" and is the global variable requiring the library lodash 
+  
+  
+  Post.findOne({_id: requestedPostId}, function(err, post){
+
+   res.render("post", {
+
+     title: post.title,
+
+     content: post.content
+
+   });
+
+ });
+
+
+
    
  
    
 });
 
-app.post("/post/:topic",function(req,res){
+app.get("/delete/:postId", function (req, res) {
+  const checkedItemId = req.params.postId;
   
   
+     Post.findByIdAndDelete(checkedItemId, function (err) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("The item has been deleted succesfully!");
+        res.redirect("/");
+      }
+    });
+    
 
 });
+// app.post("/post/:topic",function(req,res){
+  
+  
+
+// });
 
 
 
 
-
+// ---------->>>>>>>>>>>> THE LISTENING FOR THE PORT Whether it is Local or in a server xD  
 app.listen(3000, function () {
   console.log("Server started on port 3000");
 });
